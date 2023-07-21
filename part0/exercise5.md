@@ -1,4 +1,4 @@
-# Initial page setup
+# Initial page setup (SPA)
 ```mermaid
 sequenceDiagram
     participant browser
@@ -24,16 +24,4 @@ sequenceDiagram
     deactivate server
     browser-->>browser: List of notes built on webpage using DOM
     Note right of browser: This is due to the "xhttp.onreadystatechange" being called.
-```
-# Form submitted
-```mermaid
-sequenceDiagram
-    participant browser
-    participant server
-
-    browser-->>browser: "note" added to local note list, notes list redrawn.
-    browser->>server: POST "note" to https://studies.cs.helsinki.fi/exampleapp/new_note_spa
-    activate server
-    server-->>server: "note" pushed onto "notes" list
-    server-->>browser: {message: "note created"}
 ```
