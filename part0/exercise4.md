@@ -27,7 +27,7 @@ sequenceDiagram
     server-->>browser: JSON document
     deactivate server
     browser-->>browser: List of notes built on webpage using DOM
-    Note right of browser: This is due to the "xhttp.onreadystatechange" being called.
+    Note right of browser: This is due to the "xhttp.onreadystatechange" being callbacl function.
 ```
 # Form submitted
 ```mermaid
@@ -61,5 +61,5 @@ sequenceDiagram
     server-->>browser: JSON document
     deactivate server
     browser-->>browser: List of notes built on webpage using DOM
-    Note right of browser: This is due to the "xhttp.onreadystatechange" being called.
+    Note right of browser: This is due to the "xhttp.onreadystatechange" callback function.
 ```
