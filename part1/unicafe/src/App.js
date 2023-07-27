@@ -1,82 +1,68 @@
-// Root component
+import { useState } from 'react'
+
 const App = () => {
+  // save clicks of each button to its own state
+  const [good, setGood] = useState(0)
+  const [neutral, setNeutral] = useState(0)
+  const [bad, setBad] = useState(0)
 
-  // Changed all of the data about the course into
-  // An object so the data is more manageable
-  const course = 
-  {
-    name: "Half Stack application development",
-    parts: 
-    [
-      {
-        name: "Fundamentals of React",
-        exercises: 10
-      },
-      {
-        name: "Using props to pass data",
-        exercises: 7
-      },
-      {
-        name: "State of a component",
-        exercises: 14
-      }
-    ]
-  };
+  //1.6
+  const goodIncrease = () => setGood(good + 1);
+  const neutralIncrease = () => setNeutral(neutral + 1);
+  const badIncrease = () => setBad(bad + 1);
 
-  // The data being returned by the root component
+  // 1.7
+  //var average = (good + (bad * -1)) / (good + bad + neutral);
+  //var positive = (good / (good + bad +  neutral)) * 100;
+
   return (
     <div>
-      <Header course = {course} />
-      <Content parts = {course.parts} />
-      <Total parts = {course.parts} />
+      <h1>give feedback</h1>
+      <div>
+        <Button buttonEvent={goodIncrease} text = "good"/>
+        <Button buttonEvent={neutralIncrease} text = "neutral"/>
+        <Button buttonEvent={badIncrease} text = "bad"/>
+      </div>
+      <h1>statistics</h1>
+      <Statistics good = {good} bad = {bad} neutral={neutral}/>
     </div>
   )
 }
 
-// ----------------------------
-// Indivdual components of page
-// -----------------------------
-
-// Renders the name of the course
-const Header = (props) => 
-(
-  <h1>{props.course.name}</h1>
-);
-
-// Renders the parts and their numer of exercises
-const Content = (props) => 
+// 1.8
+const Statistics = ({good, bad, neutral}) =>
 {
-  // I write an anonymous function within the return
-  // data, which maps all the values in the list
-  // to a format in which they can be rendered.
+  // 1.9
+  if(good == 0 && bad == 0 && neutral == 0)
+  {
+    return (
+      <div>
+        <p>No feedback given</p>
+      </div>
+    );
+  }
+  var average = (good + (bad * -1)) / (good + bad + neutral);
+  var positive = (good / (good + bad +  neutral)) * 100;
+
   return (
-    <b>
-      {props.parts.map((part) => {
-        return (<p>{part.name} {part.exercises}</p>);
-      })}
-    </b>
+    <table>
+      <tbody>
+        <StatisticLine text = "good" value = {good} percentage = "no"/>
+        <StatisticLine text = "neutral" value = {neutral} percentage = "no"/>
+        <StatisticLine text = "bad" value = {bad} percentage = "no"/>
+        <StatisticLine text = "average" value = {average} percentage = "no"/>
+        <StatisticLine text = "positive" value = {positive} percentage = "yes"/>
+      </tbody>
+    </table>
   );
 };
 
-// Renders the number of total exercises.
-const Total = (props) => 
-{
-  // Calls anonymous function to calculate total number of 
-  // excercises
-  var num = (function() {
-    var i = 0;
-    for(var x = 0; x!=props.parts.length;x++)
-    {
-      i = i + props.parts[x].exercises;
-    }
-    return i;
-  })();
+// 1.10
+const Button = ({buttonEvent, text}) => <button onClick={buttonEvent}>{text}</button>;
 
-  // Returns the total HTML with the total number of exercises
-  return (
-    <p>Number of exercises {num}</p>
-  );
-};
-
+const StatisticLine = ({text, value, percentage}) => {
+  if(percentage == "yes") return <tr><td>{text}</td><td>{value} %</td></tr>;
+  return <tr><td>{text}</td><td>{value}</td></tr>;
+}
 
 export default App
