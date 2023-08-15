@@ -15,23 +15,50 @@ const App = () => {
 
   const peopleToDisplay = persons.filter(person => person.name.toLowerCase().includes(filter.toLowerCase()));
 
+  const getNewID = () => {
+    var highest = 0;
+    persons.forEach(person => {
+      if(person.id > highest) highest = person.id;
+    })
+    console.log("newID:",highest+1);
+    return highest+ 1;
+  };
+
   //2.6
   const addNewName = (e) => {
     e.preventDefault();
   
     //2.7
     const matches = persons.map( person => person.name == newName ? 1 : 0);
-
+    var newPersons = [...persons];
     if (matches.indexOf(1) > -1){
-      window.alert(newName + " already added to phonebook");
+      persons.forEach(person => {
+        if(person.name == newName){
+          if(person.number != newNum){
+            if(window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)){
+              peopleServices.updatePerson(person.id,{...person, number: newNum});
+              newPersons[newPersons.indexOf(person)] = {...person, number: newNum};
+            }
+          }
+          else window.alert(`${person.name} already added to phonebook.`);
+        }
+      });
+      setPersons(newPersons);
     } else {
-      const personObj = {name: newName, number: newNum};
+      const personObj = {name: newName, number: newNum, id: getNewID()};
       //2.12
         peopleServices.createPerson(personObj);
         setPersons(persons.concat(personObj)); 
         setNewName(""); setNewNum("");
     }
   };
+
+  //2.14
+  const removeName = (id) => {
+    var newPersons = [...persons];
+    newPersons.splice(persons.indexOf(persons.filter(person => person.id == id)[0]),1);
+    setPersons(newPersons);
+  }
 
   const handleNameChange = (e) => setNewName(e.target.value);
   //2.8
@@ -50,7 +77,7 @@ const App = () => {
 
       <h3>Numbers</h3>
 
-      <Persons peopleToDisplay={peopleToDisplay}/>
+      <Persons peopleToDisplay={peopleToDisplay} localDelete={removeName}/>
     </div>
   );
 }
@@ -70,12 +97,8 @@ const PersonForm = ({addNewName, handleNameChange, handleNumChange, newName, new
         </div>
   </form>
 );
-const Persons = ({peopleToDisplay}) => {
-  const deletePerson = (id) => {
-    console.log("delete",id);
-    peopleServices.deletePerson(id);
-  };
- return (peopleToDisplay.map(person => <div key = {person.name} >{person.name} {person.number} <button onClick={deletePerson(person.id)}>delete</button></div>));
+const Persons = ({peopleToDisplay, localDelete}) => {
+ return (peopleToDisplay.map(person => <div key = {person.name} >{person.name} {person.number} <button onClick = {() => {if(window.confirm(`Do you want to delete ${person.name}?`)){peopleServices.deletePerson(person.id); localDelete(person.id)}}}>delete</button></div>));
 }
 
 export default App
