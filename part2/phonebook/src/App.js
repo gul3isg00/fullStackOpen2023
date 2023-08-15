@@ -1,13 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import peopleServices from './services/people';
 
 const App = () => {
 
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456', id: 1 },
-    { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
-    { name: 'Dan Abramov', number: '12-43-234345', id: 3 },
-    { name: 'Mary Poppendieck', number: '39-23-6423122', id: 4 }
-  ]);
+  const [persons, setPersons] = useState([]);
+
+  //2.12
+  useEffect(() => {peopleServices.getAllPeople().then(p => {setPersons(p)})},[]);
 
   const [newName, setNewName] = useState('');
   const [newNum, setNewNum] = useState('');
@@ -26,9 +25,11 @@ const App = () => {
     if (matches.indexOf(1) > -1){
       window.alert(newName + " already added to phonebook");
     } else {
-      setPersons(persons.concat({name: newName, number: newNum})); 
-      setNewName(""); 
-      setNewNum("");
+      const personObj = {name: newName, number: newNum};
+      //2.12
+        peopleServices.createPerson(personObj);
+        setPersons(persons.concat(personObj)); 
+        setNewName(""); setNewNum("");
     }
   };
 
@@ -69,6 +70,12 @@ const PersonForm = ({addNewName, handleNameChange, handleNumChange, newName, new
         </div>
   </form>
 );
-const Persons = ({peopleToDisplay}) => peopleToDisplay.map(person => <div key = {person.name} >{person.name} {person.number}</div>);
+const Persons = ({peopleToDisplay}) => {
+  const deletePerson = (id) => {
+    console.log("delete",id);
+    peopleServices.deletePerson(id);
+  };
+ return (peopleToDisplay.map(person => <div key = {person.name} >{person.name} {person.number} <button onClick={deletePerson(person.id)}>delete</button></div>));
+}
 
 export default App
