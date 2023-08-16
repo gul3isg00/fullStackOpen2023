@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react'
 import peopleServices from './services/people';
+import './index.css';
 
 const App = () => {
 
   const [persons, setPersons] = useState([]);
 
   //2.12
-  useEffect(() => {peopleServices.getAllPeople().then(p => {setPersons(p)})},[]);
+  useEffect(() => {peopleServices.getAllPeople().then(p => p.code == null ? setPersons(p) : setDisplayMessage("Cannot get phone numbers - bad request",true))},[]);
+
+  //2.16
+  const [displayMessage, setDisplayMessage] = useState(['',false]);
 
   const [newName, setNewName] = useState('');
   const [newNum, setNewNum] = useState('');
@@ -14,6 +18,8 @@ const App = () => {
   const [filter, setFilter] = useState('');
 
   const peopleToDisplay = persons.filter(person => person.name.toLowerCase().includes(filter.toLowerCase()));
+
+  const updateDisplayMessage = (message, bad) => setDisplayMessage([message,bad]);
 
   const getNewID = () => {
     var highest = 0;
@@ -36,18 +42,25 @@ const App = () => {
         if(person.name == newName){
           if(person.number != newNum){
             if(window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)){
-              peopleServices.updatePerson(person.id,{...person, number: newNum});
-              newPersons[newPersons.indexOf(person)] = {...person, number: newNum};
+              peopleServices.updatePerson(person.id,{...person, number: newNum}).then(r => {
+                const newPerson = {...person, number: newNum};
+                console.log(newPerson);
+                console.log(r);
+                if(r.name != null && r.name == newPerson.name) {
+                  newPersons[newPersons.indexOf(person)] = newPerson
+                  updateDisplayMessage(`${person.name}'s phone number has been updated.`,false);
+                } else r.request.status == 404 ? updateDisplayMessage(`${person.name} has already been removed from the server.`,true) : updateDisplayMessage(`${person.name} cannot be updated.`,true);
+              });
             }
           }
-          else window.alert(`${person.name} already added to phonebook.`);
+          else updateDisplayMessage(`${person.name} already added to phonebook.`,true);
         }
       });
       setPersons(newPersons);
     } else {
       const personObj = {name: newName, number: newNum, id: getNewID()};
       //2.12
-        peopleServices.createPerson(personObj);
+        peopleServices.createPerson(personObj).then(r => r.code != null ? updateDisplayMessage(`Couldn't add ${newName}, bad request`,true) : updateDisplayMessage(`Added ${newName}`,false));
         setPersons(persons.concat(personObj)); 
         setNewName(""); setNewNum("");
     }
@@ -56,7 +69,8 @@ const App = () => {
   //2.14
   const removeName = (id) => {
     var newPersons = [...persons];
-    newPersons.splice(persons.indexOf(persons.filter(person => person.id == id)[0]),1);
+    const curPerson = persons.filter(person => person.id == id)[0];
+    newPersons.splice(persons.indexOf(curPerson),1);
     setPersons(newPersons);
   }
 
@@ -68,7 +82,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-
+      <MessageDisplay message={displayMessage[0]} bad = {displayMessage[1]}/>
       <Filter filter={filter} handleFilterChange={handleFilterChange}/>
       
       <h3>Add a new</h3>
@@ -77,10 +91,12 @@ const App = () => {
 
       <h3>Numbers</h3>
 
-      <Persons peopleToDisplay={peopleToDisplay} localDelete={removeName}/>
+      <Persons updateDisplayMessage={updateDisplayMessage} peopleToDisplay={peopleToDisplay} localDelete={removeName}/>
     </div>
   );
 }
+
+const MessageDisplay = ({message, bad}) => message === ''? <div></div>: (bad ? <div style = {{color: "red"}}className='message'>{message}</div> : <div className='message'>{message}</div>)
 
 //2.10
 const Filter = ({filter, handleFilterChange}) => <div>Filter shown with <input value = {filter} onChange={handleFilterChange}/></div>;
@@ -97,8 +113,12 @@ const PersonForm = ({addNewName, handleNameChange, handleNumChange, newName, new
         </div>
   </form>
 );
-const Persons = ({peopleToDisplay, localDelete}) => {
- return (peopleToDisplay.map(person => <div key = {person.name} >{person.name} {person.number} <button onClick = {() => {if(window.confirm(`Do you want to delete ${person.name}?`)){peopleServices.deletePerson(person.id); localDelete(person.id)}}}>delete</button></div>));
+const Persons = ({peopleToDisplay, localDelete, updateDisplayMessage}) => {
+ return (peopleToDisplay.map(person => <div key = {person.name} >{person.name} {person.number} <button onClick = {() => {if(window.confirm(`Do you want to delete ${person.name}?`)){peopleServices.deletePerson(person.id).then(r => {
+  console.log(r);
+  r.code != null ? updateDisplayMessage(`${person.name} has already been removed from the server.`,true) : updateDisplayMessage(`${person.name} deleted.`,false);
+  localDelete(person.id);
+ });}}}>delete</button></div>));
 }
 
 export default App
